@@ -3,10 +3,14 @@
 Here we are going to backup Jenkins using velero from source PMK cluster and restor the back to second PMK cluster using velero's restic file level backup feature. 
 
 # Components required:
-PMK version: 2 x PMK 4.3 four node cluster (Single Master and Three workers per cluster).
+PMK clusters: 2 x PMK 4.3 four node cluster (Single Master and Three workers per cluster)
+
 CNI: flannel
+
 Persistent Storage: Rook CSI
-S3: MINIO
+
+S3 storage: MINIO
+
 CI App: Jenkins
 
 # Architecture:
