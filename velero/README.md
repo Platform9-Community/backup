@@ -148,7 +148,7 @@ $ git clone https://github.com/KoolKubernetes/backup.git
 $ kubectl apply backup/velero/jenkins.yaml
 ```
 
-Validate Jenkins is up and Running.
+Validate Jenkins is up and running.
 
 ```bash
 $ k get all
@@ -459,4 +459,4 @@ $ k get pvc
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 jenkinsci-pvc   Bound    pvc-52f6cefe-4027-48f3-9f4f-53e38473a29f   10Gi       RWO            rook-ceph-block   49s  
 ```
-Once Jenkins is running validate everything is as it was on the source kubernetes cluster.
+Once Jenkins is running validate everything within Jenkins is as it was on the source kubernetes cluster.
