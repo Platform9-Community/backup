@@ -1,26 +1,25 @@
 # Data migration using S3 and velero from Platform9 Managed Kubernetes (PMK) to another PMK cluster.
 
-Here we are going to backup Jenkins using velero from source PMK cluster and restor the back to second PMK cluster using velero's restic file level backup feature. 
+Here we are going to backup Jenkins using velero from a PMK 4.3 cluster and restore it to second PMK cluster using velero's restic file level backup feature. This typically depicts a cloud to cloud migration scenario for an kubernetes application with 
+its persistent volume data.
 
 # Components required:
-PMK clusters: 2 x PMK 4.3 four node cluster (Single Master and Three workers per cluster)
+PMK clusters: 2 x PMK 4.3 four node clusters (Each with Single Master and Three worker nodes)
 
 CNI: flannel
 
-Persistent Storage: Rook CSI
+Persistent Storage: Rook CSI 
 
 S3 storage: MINIO
 
-CI App: Jenkins
+App: Jenkins
 
 # Architecture:
-Velero needs its server component running in kubernets cluster to take backup. A velero client very similar to kubectl is available for users to connect with the velero server componets on multiple kubernetes cluster via the kubefig present on the user's system. Velero server needs S3 bucket to 
-store the kubernetes backup. The S3 bucket can be created localy on the source kubernetes cluster using
-a opensource object storage product called as MINIO. Velero server is installed on both source and destination kubernetes clusters. Both velero server componets must have access to same S3 bucket in order
-to backup and restore the application.
+Velero needs its server component running in kubernets cluster where a backup is initiated. A velero client very similar to kubectl is used to connect with the velero servers on multiple kubernetes clusters via the kubefig present on the user system from where client is running. Velero server needs S3 bucket to store the kubernetes backup. The S3 bucket can be created localy on the source kubernetes cluster using a opensource object storage called as MINIO. Velero server installed on the destination kubernetes clusters has to have access to the MINIO bucket's public endpoint in order to query and restore the backup. A reference to this architecture can e found on google by earching for velero and clicking on 'Images' below the search bar.
+
 
 # Kubernetes Build
-Using the platform9 free tier account or your platform9 management plane carve two PMK 4.3+ (kubernetes 1.16+) clusters. We have tested this with flannel CNI and Rook CSI. Please refer [Rook](https://github.com/KoolKubernetes/csi/tree/master/rook/) to configure the Rook CSI on the PMK cluster for testing velero.
+Using the platform9 free tier account or your platform9 management plane carve two PMK 4.3+ (kubernetes 1.16+) clusters. We have tested this with flannel CNI and Rook CSI. Please refer [Rook](https://github.com/KoolKubernetes/csi/tree/master/rook/) to configure the Rook CSI on both PMK clusters.
 
 # Deploy velero
 Once your both kubernetes clusters are ready with Rook CSI create storage class named 'rook-ceph-block' in both the clusters. Refer the Rook koolkubernetes readme under csi repository for setting this up.
@@ -33,22 +32,23 @@ CURRENT   NAME   CLUSTER               AUTHINFO                     NAMESPACE
           cl5    cl5.platform9.horse   surendra@platform9.net.cl5   default
           cl6    cl6.platform9.horse   surendra@platform9.net.cl6   default
 ```
-Download the latest stable release of velero and save the binary in your path.
+Download the latest stable release of velero, extract it and move into your system path.
 ```bash
 $ wget https://github.com/vmware-tanzu/velero/releases/download/v1.4.2/velero-v1.4.2-linux-amd64.tar.
 $ tar xvf velero-v1.4.2-linux-amd64.tar.gz -C .
 $ sudo chown root:root velero
 $ sudo mv velero /usr/local/bin
 ```
-Install minio inside the first kubernetes cluster
+Install minio inside the first kubernetes cluster. 
 ```bash
-$ kubectl apply -f 00-minio-deployment.yaml
+$ git clone https://github.com/KoolKubernetes/objectstorage.git
+$ kubectl apply -f objectstorage/minio/minio-velero-nodeport.yaml
 namespace/velero created
 deployment.apps/minio created
 service/minio created
 job.batch/minio-setup created
 
-$ k get ns
+$ kubectl get ns
 NAME                   STATUS   AGE
 default                Active   20h
 kube-node-lease        Active   20h
@@ -61,11 +61,12 @@ pf9-operators          Active   20h
 rook-ceph              Active   3h39m
 velero                 Active   39s
 
-$ k get pods -n velero
+$ kubectl get pods -n velero
 NAME                    READY   STATUS      RESTARTS   AGE
 minio-d787f4bf7-wqpr7   1/1     Running     0          56s
 minio-setup-tvpb2       0/1     Completed   2          57s
 ```
+Minio can be accessed now using the cl4 API endpoint and the nodeport showin in the minio service.
 
 Install velero on the first cluster
 ```bash
@@ -75,7 +76,7 @@ velero install \
      --bucket velero \
      --secret-file ./credentials-velero \
      --use-volume-snapshots=false \
-     --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000 \
+     --backup-location-config region=minio,s3ForcePathStyle="true",s3Url=http://minio.velero.svc:9000,publicUrl=http://10.128.240.197:30673 \
      --use-restic \
      --kubeconfig ~/.kube/config \
      --image "velero/velero:v1.4.2" \
@@ -124,13 +125,12 @@ Velero is installed! ⛵ Use 'kubectl logs deployment/velero -n velero' to view 
 Here:
 s3Url is the IP and port of S3 endpoint which is internally accessible from within the kubernetes cluster.
 For on-premises clusters the provider type is aws.
-Since there are volume snapshot providers in this cluster the volume snapshot flag is disabled. This can be enabled in plublic cloud or if the volume snapshot providers is present.
+Since there are no volume snapshot providers in this cluster the volume snapshot flag is disabled. This can be enabled in plublic cloud or if the volume snapshot providers is present.
 The restic feature is used to take file level backups.
+publicUrl - This option represents the the IP and port of the MINIO S3 endpoint accessible from outside the first kubernetes cluster for the velero server just installed. 10.128.240.197 is the IP of the kubernetes API endpoint. MINIO nodeport service that was earlier created has obtained port 30673 on the nodes.
 
-Note:
-publicUrl - This option represents the the IP and port of the S3 endpoint outside the kubernetes cluster for the velero server. On source cluster we are not specifying it but if it is specified then once will have to set the port in velero's nodeport service.
+Validate velero service and backup location is now present in the cluster. If you login to MINIO from its UI you can now see the cl4 directory under the velero bucket.
 
-Validate velero service and backup location is now present in the cluster.
 ```bash
 $ velero backup-location get
 NAME      PROVIDER   BUCKET/PREFIX   ACCESS MODE
@@ -142,10 +142,15 @@ NAME    TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
 minio   NodePort   10.21.178.139   <none>        9000:30673/TCP   5d3h
 ```
 
-Deploy Jenkins on first cluster
+Deploy Jenkins on first cluster. Note this deployment needs a stroage class named 'rook-ceph-block' already deployed from rook.
 ```bash
-$ kubectl apply jenkins.yaml
+$ git clone https://github.com/KoolKubernetes/backup.git
+$ kubectl apply backup/velero/jenkins.yaml
+```
 
+Validate Jenkins is up and Running.
+
+```bash
 $ k get all
 NAME                           READY   STATUS    RESTARTS   AGE
 pod/jenkins-58b8d7456d-vtz9r   1/1     Running   0          16h
@@ -164,16 +169,15 @@ replicaset.apps/jenkins-58b8d7456d   1         1         1       16h
 ```
 
 
-Annotate Jenkins pod with the jenkins home name to be backed up during velero backup of jenkins namespace
+Annotate Jenkins pod with the jenkins home name to be backed up during velero backup of jenkins namespace.
 
 ```bash
 $ k annotate pods jenkins-58b8d7456d-vtz9r backup.velero.io/backup-volumes=jenkins-home --overwrite
 pod/jenkins-58b8d7456d-vtz9r annotated
 ```
 
-Access jenkins from UI and create test pipelines. Make Jenkins operational. 
-
-Backup jenkins namespace and its volume with velero.
+Operationalize jenkins. Access jenkins from UI and create test pipelines, install and update some plugins.
+Now Backup jenkins namespace and its volume with velero.
 
 ```bass
 $ velero backup create jenkins-cl4 --include-namespaces default
@@ -228,14 +232,20 @@ Restic Backups (specify --details for more information):
   In Progress:  1
 ubuntu@admin-surendra:~$
 ```
-Now switch the context to second cluster and install velero on it
+
+Verify the backup is completed. 
+
+Now switch the context to second cluster
 ```bash
 $ k config get-contexts
 CURRENT   NAME   CLUSTER               AUTHINFO                     NAMESPACE
           cl4    cl4.platform9.horse   surendra@platform9.net.cl4   default
           cl5    cl5.platform9.horse   surendra@platform9.net.cl5   default
 *         cl6    cl6.platform9.horse   surendra@platform9.net.cl6   default
+```
 
+Install velero on it
+```bash
 $ velero install \
 >      --provider aws \
 >      --plugins velero/velero-plugin-for-aws:v1.1.0 \
@@ -309,7 +319,7 @@ restic-v95dz              1/1     Running   0          63s
 velero-7c6d9bb58d-zt2ft   1/1     Running   0          63s
 ```
 
-Validate velero on second cluster can communicate with the same s3 bucket and fetch the backups
+Validate velero on second cluster can communicate with the same MINIO s3 bucket and list the backups
 ```bash
 $ velero backup get
 NAME          STATUS            ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   SELECTOR
@@ -403,7 +413,7 @@ Restic Backups:
 ```
 Make sure you have the storage class named 'rook-ceph-block' present on the second cluster for volume provisioning before proceeding with restore.
 
-Restore the backup
+Restore the backup on the second cluster.
 ```bash
 $ velero restore create --from-backup jenkins-cl4
 Restore request "jenkins-cl4-20200810135422" submitted successfully.
@@ -438,8 +448,8 @@ Restic Restores (specify --details for more information):
   In Progress:  1
 ```
 
-```bash
 Validate Jenkins
+```bash
 $ k get pods
 NAME                       READY   STATUS     RESTARTS   AGE
 jenkins-58b8d7456d-vtz9r   0/1     Init:0/1   0          43s
@@ -449,3 +459,4 @@ $ k get pvc
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 jenkinsci-pvc   Bound    pvc-52f6cefe-4027-48f3-9f4f-53e38473a29f   10Gi       RWO            rook-ceph-block   49s  
 ```
+Once Jenkins is running validate everything is as it was on the source kubernetes cluster.
