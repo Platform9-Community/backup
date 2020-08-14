@@ -401,7 +401,7 @@ Restic Backups:
   Completed:
     default/jenkins-58b8d7456d-vtz9r: jenkins-home
 ```
-Make sure you have the storage class named 'rook-ceph-block' present on the second cluster.
+Make sure you have the storage class named 'rook-ceph-block' present on the second cluster for volume provisioning before proceeding with restore.
 
 Restore the backup
 ```bash
@@ -443,7 +443,9 @@ Validate Jenkins
 $ k get pods
 NAME                       READY   STATUS     RESTARTS   AGE
 jenkins-58b8d7456d-vtz9r   0/1     Init:0/1   0          43s
-ubuntu@admin-surendra:~/velero$ k get pvc
+```
+```bash
+$ k get pvc
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
 jenkinsci-pvc   Bound    pvc-52f6cefe-4027-48f3-9f4f-53e38473a29f   10Gi       RWO            rook-ceph-block   49s  
 ```
