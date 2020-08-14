@@ -1,4 +1,4 @@
-# Data migration using S3 and velero from Platform9 Managed Kubernetes (PMK) to another PMK cluster.
+# Data migration using velero from Platform9 Managed Kubernetes (PMK) to another Platform9 Managed Kubernetes (PMK) cluster.
 
 Here we are going to backup Jenkins using velero from a PMK 4.3 cluster and restore it to second PMK cluster using velero's restic file level backup feature. This typically depicts a cloud to cloud migration scenario for an kubernetes application with 
 its persistent volume data.
