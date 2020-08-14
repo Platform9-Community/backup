@@ -1,7 +1,6 @@
-# Backup kubernetes namespaces using velero on Platform9 Managed Kubernetes (PMK)
+# Backup and restore kubernetes namespaces using velero on Platform9 Managed Kubernetes (PMK)
 
-Here we are going to backup Jenkins using velero from a PMK 4.3 cluster and restore it to second PMK cluster using velero's restic file level backup feature. This typically depicts a cloud to cloud migration scenario for an kubernetes application with 
-its persistent volume data.
+Here we are going to backup Jenkins using velero from a PMK 4.3 cluster and restore it to second PMK cluster using velero's restic file level backup feature. This typically depicts a cloud to cloud migration scenario for an kubernetes application and its persistent volume data.
 
 # Components required:
 PMK clusters: 2 x PMK 4.3 four node clusters (Each with Single Master and Three worker nodes)
