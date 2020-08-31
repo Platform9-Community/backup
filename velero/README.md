@@ -2,7 +2,7 @@
 
 Here we are going to backup Jenkins using velero from a PMK 4.3 cluster and restore it to second PMK cluster using velero's restic file level backup feature. This typically depicts a cloud to cloud migration scenario for an kubernetes application and its persistent volume data.
 
-# Components required:
+# Components required (Tested with):
 PMK clusters: 2 x PMK 4.3 four node clusters (Each with Single Master and Three worker nodes)
 
 CNI: flannel
@@ -12,6 +12,8 @@ Persistent Storage: Rook CSI
 S3 storage: MINIO
 
 App: Jenkins
+
+Note: Restic file backup does not support hostPath type of volumes.
 
 # Architecture:
 Velero needs its server component running in kubernets cluster where a backup is initiated. A velero client very similar to kubectl is used to connect with the velero servers on multiple kubernetes clusters via the kubefig present on the user system from where client is running. Velero server needs S3 bucket to store the kubernetes backup. The S3 bucket can be created localy on the source kubernetes cluster using a opensource object storage called as MINIO. Velero server installed on the destination kubernetes clusters has to have access to the MINIO bucket's public endpoint in order to query and restore the backup. A reference to this architecture can e found on google by earching for velero and clicking on 'Images' below the search bar.
