@@ -110,12 +110,13 @@ The major ones and the most problematic can be ensuring that storageClass and vo
    helm repo add kasten https://charts.kasten.io/
    ```
   iii.
-  For `Helm 3` based installation,
+#### Helm 3
   ```bash
   helm install k10 kasten/k10 --namespace=kasten-io
   ```
+#### Helm 2
 
-  For `Helm 2` installations,additional steps are needed to setup  a service account that has a cluster-admin role binding. Without the proper binding, you may run into install errors. If this happens, your can run the following
+  Additional steps are needed to setup  a service account that has a cluster-admin role binding. Without the proper binding, you may run into install errors. If this happens, your can run the following
   add a service account within a namespace to segregate tiller
   ```bash
   kubectl --namespace kube-system create sa tiller
@@ -195,7 +196,6 @@ Perform the above steps to install Kasten on destination cluster as well.
 I am installing this test mysql application to demonstrate backup and restore functionality
 
 1. Create a namespace called mysql-test
-
 ```bash
 kubectl create namespace mysql-test
 ```
@@ -275,53 +275,48 @@ You can now login to the UI by browsing to this [link](http://127.0.0.1:8080/k10
 2. Click on the location profiles and enter credentials for any of the public cloud vendors where remote object storage can be uesd. I am showing Amazon S3 as an example. Ensure that the bucket  is already created in that region and the credentials entered have Read/Write access to it.
 
 ![New Profile](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/new_profile.png)
-
 Click on validate and save and ensure that the location profile has been created successfully.
 
 
 This is the remote object storage that would be used to backup the data of your applications running on your source cluster.
 
-[Location Profile](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/location_profile.png)
+![Location Profile](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/location_profile.png)
 
 3. Let's enable K10 Disaster recovery in the next steps. Go to the Settings tab and select K10 Disaster Recovery -> Enable K10 DR.
 Select the Location Profile created in Step 2.
 
-[Enable DR](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/enable_dr.png)
+![Enable DR](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/enable_dr.png)
 
 
 
-3. Next, we'll create a backup policy that would be responsible for backing up your application.
-
+4. Next, we'll create a backup policy that would be responsible for backing up your application.
 Goto Dashboard and select Polices. On the policies  page, you'll observe "Create a new policy" button.
 
-Enter the name of the policy. Select action as Snapshot, Action Frequency as Daily and one of the most important section is "Enable Backups via Snapshot Exports".This functionality exports the backup to the remote object storage ( S3 in this case) which can be used for restore then.
+  Enter the name of the policy. Select action as Snapshot, Action Frequency as Daily and one of the most important section is "Enable Backups via Snapshot Exports".This functionality exports the backup to the remote object storage ( S3 in this case) which can be used for restore then.
 
-[new-policy](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/new_policy.png)
+![new-policy](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/new_policy.png)
 
+  Scroll down and selection the application by name, in this case its mysql-test then select the Location Profile created and click on Create policy
 
-Scroll down and selection the application by name, in this case its mysql-test then select the Location Profile created and click on Create policy
-
-[new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/
+![new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/
 new_policy_1.png)
-
-
 
 Once the backup policy has been created, you should now be able to see the application as compliant and the backup policy can be triggered.
 
-[compliant application](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/applications.png)
+![compliant application](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/applications.png)
 
 4. On the policies page, Click on the "Show Import Details" button so we can store the encoded text that would be required while creating the Import policy on the destination clusters
 
-[compliant application](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/importData.png)
+![compliant application](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/importData.png)
 
 4. Let's trigger the policy now by clicking on Policies -> select "run once"
 
 
-[policy_trigger](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/policy_trigger.png)
+![policy_trigger](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/policy_trigger.png)
 
 5. You can track the progress of the backup by going back to the Dashboard. Here's a screenshot where backup completed and the subsequent Export operation is underway.
 
-[backup_export](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/backup_export.png)
+![backup_export](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/backup_export.png)
 
 
 6. Once the backup is complete, ensure that the AWS bucket has the data populated.
@@ -341,37 +336,37 @@ Now the UI should be accessible on the following link - http://127.0.0.1:8081/k1
 
 3. Now, we'll be creating the Import Policy so we can run the Restore job. Selecting restore after import deploys the restored application too. There are other options that have been specified in the screenshot along with their explanations.
 
-[import_policy](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/import_policy.png)
+![import_policy](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/import_policy.png)
 
 
 There's one more important option "Apply Transforms to restored resources" which is  needed if the storageclasses from source and destination clusters differ( which is most likely the case)
 
 Select Apply transform and click on "Add New Transform"
 
-[applytranformCheckbox](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/applytranformCheckbox.png)
+![applytranformCheckbox](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/applytranformCheckbox.png)
 
 4. This would open up a new dialog box called "New Transform". Click on "Use Example" and select "Change StorageClass"
 
-[new_transform](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/NewTransform.png)
+![new_transform](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/NewTransform.png)
 
 
 Click on change storageClass and edit the name of the storage class present on the destination cluster. ( In my case , as its a minikube cluster, the storage class name is standard)
 
-[edit](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/edit.png)
+![edit](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/edit.png)
 
 
 Enter the name of the storage class in double-quotes -> Select Edit Operation and click on Create Transform.
 
-[CreateTransform](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/CreateTransform.png)
+![CreateTransform](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/CreateTransform.png)
 
 5. Finally, after the tranformation step, you would see a text box for "Config Data for Import", Over here you'll have to enter the copied encoded text from the policy creation step. Click on Create policy to finish the policy creation.
 
 6. Click on "run once" option to run the Import policy once. This triggers the Import from the Restorepoint first. This is nothing but fetching data from the remote object storage, S3 in this case. Its followed by the restore job that restores the application on the destination cluster.
 
 
-[ImportJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/ImportJob.png)
+![ImportJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/ImportJob.png)
 
-[RestoreJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/restore.png)
+![RestoreJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/restore.png)
 
 
 7. Once the jobs complete, you'll find the newly created namespace and the mysql pod in that namespace. Lets verify if the data has been actually restored. Run the following commands on the destination cluster -
