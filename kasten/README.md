@@ -275,9 +275,8 @@ You can now login to the UI by browsing to this [link](http://127.0.0.1:8080/k10
 2. Click on the location profiles and enter credentials for any of the public cloud vendors where remote object storage can be uesd. I am showing Amazon S3 as an example. Ensure that the bucket  is already created in that region and the credentials entered have Read/Write access to it.
 
 ![New Profile](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/new_profile.png)
+
 Click on validate and save and ensure that the location profile has been created successfully.
-
-
 This is the remote object storage that would be used to backup the data of your applications running on your source cluster.
 
 ![Location Profile](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/location_profile.png)
@@ -298,8 +297,7 @@ Goto Dashboard and select Polices. On the policies  page, you'll observe "Create
 
   Scroll down and selection the application by name, in this case its mysql-test then select the Location Profile created and click on Create policy
 
-![new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/
-new_policy_1.png)
+![new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/  new_policy_1.png)
 
 Once the backup policy has been created, you should now be able to see the application as compliant and the backup policy can be triggered.
 
@@ -364,7 +362,7 @@ Enter the name of the storage class in double-quotes -> Select Edit Operation an
 6. Click on "run once" option to run the Import policy once. This triggers the Import from the Restorepoint first. This is nothing but fetching data from the remote object storage, S3 in this case. Its followed by the restore job that restores the application on the destination cluster.
 
 
-![ImportJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/ImportJob.png)
+![ImportJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/importJob.png)
 
 ![RestoreJob](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/restore.png)
 
