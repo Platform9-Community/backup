@@ -297,7 +297,7 @@ Goto Dashboard and select Polices. On the policies  page, you'll observe "Create
 
   Scroll down and selection the application by name, in this case its mysql-test then select the Location Profile created and click on Create policy
 
-![new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/  new_policy_1.png)
+![new-policy-cont](https://github.com/KoolKubernetes/backup/blob/master/kasten/images/new_policy_1.png)
 
 Once the backup policy has been created, you should now be able to see the application as compliant and the backup policy can be triggered.
 
